@@ -1,0 +1,5 @@
+.git
+posters/*
+__pycache__
+*.pyc
+.env

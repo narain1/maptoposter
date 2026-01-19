@@ -19,6 +19,7 @@ COPY . .
 
 # Ensure the posters directory exists
 RUN mkdir -p posters
+VOLUME /app/posters
 
 # Expose Gradio port
 EXPOSE 7860
