@@ -2,7 +2,7 @@ import gradio as gr
 import create_map_poster as cmp
 import os
 
-def generate_poster(city, country, theme, distance):
+def generate_poster(city, country, theme, distance, show_text, show_coords):
     """
     Gradio wrapper for the poster generation logic.
     """
@@ -20,7 +20,11 @@ def generate_poster(city, country, theme, distance):
         output_file = cmp.generate_output_filename(city, theme)
         
         # Create the poster
-        cmp.create_poster(city, country, coords, int(distance), output_file)
+        cmp.create_poster(
+            city, country, coords, int(distance), output_file,
+            show_text=show_text,
+            show_coords=show_coords
+        )
         
         if os.path.exists(output_file):
             return output_file, f"Successfully generated poster for {city}!"
@@ -57,6 +61,10 @@ with gr.Blocks(title="City Map Poster Generator", theme=gr.themes.Soft()) as dem
                 value=12000, 
                 label="Map Radius (meters)"
             )
+            with gr.Row():
+                show_text_cb = gr.Checkbox(label="Show City Title", value=True)
+                show_coords_cb = gr.Checkbox(label="Show Coordinates", value=True)
+            
             generate_btn = gr.Button("🎨 Generate Poster", variant="primary")
             
             status_msg = gr.Markdown("")
@@ -73,18 +81,24 @@ with gr.Blocks(title="City Map Poster Generator", theme=gr.themes.Soft()) as dem
 
     generate_btn.click(
         fn=generate_poster,
-        inputs=[city_input, country_input, theme_dropdown, distance_slider],
+        inputs=[
+            city_input, country_input, theme_dropdown, distance_slider, 
+            show_text_cb, show_coords_cb
+        ],
         outputs=[output_image, status_msg]
     )
     
     gr.Examples(
         examples=[
-            ["Venice", "Italy", "blueprint", 5000],
-            ["New York", "USA", "noir", 12000],
-            ["Tokyo", "Japan", "japanese_ink", 18000],
-            ["San Francisco", "USA", "sunset", 10000],
+            ["Venice", "Italy", "blueprint", 5000, True, True],
+            ["New York", "USA", "noir", 12000, True, True],
+            ["Tokyo", "Japan", "japanese_ink", 18000, True, True],
+            ["San Francisco", "USA", "sunset", 10000, True, True],
         ],
-        inputs=[city_input, country_input, theme_dropdown, distance_slider]
+        inputs=[
+            city_input, country_input, theme_dropdown, distance_slider,
+            show_text_cb, show_coords_cb
+        ]
     )
 
 if __name__ == "__main__":

@@ -213,7 +213,7 @@ def get_coordinates(city, country):
     else:
         raise ValueError(f"Could not find coordinates for {city}, {country}")
 
-def create_poster(city, country, point, dist, output_file):
+def create_poster(city, country, point, dist, output_file, show_text=True, show_coords=True):
     print(f"\nGenerating map for {city}, {country}...")
     
     # Progress bar for data fetching
@@ -274,37 +274,40 @@ def create_poster(city, country, point, dist, output_file):
     create_gradient_fade(ax, THEME['gradient_color'], location='top', zorder=10)
     
     # 4. Typography using Roboto font
-    if FONTS:
-        font_main = FontProperties(fname=FONTS['bold'], size=60)
-        font_top = FontProperties(fname=FONTS['bold'], size=40)
-        font_sub = FontProperties(fname=FONTS['light'], size=22)
-        font_coords = FontProperties(fname=FONTS['regular'], size=14)
-    else:
-        # Fallback to system fonts
-        font_main = FontProperties(family='monospace', weight='bold', size=60)
-        font_top = FontProperties(family='monospace', weight='bold', size=40)
-        font_sub = FontProperties(family='monospace', weight='normal', size=22)
-        font_coords = FontProperties(family='monospace', size=14)
-    
-    spaced_city = "  ".join(list(city.upper()))
+    if show_text or show_coords:
+        if FONTS:
+            font_main = FontProperties(fname=FONTS['bold'], size=60)
+            font_top = FontProperties(fname=FONTS['bold'], size=40)
+            font_sub = FontProperties(fname=FONTS['light'], size=22)
+            font_coords = FontProperties(fname=FONTS['regular'], size=14)
+        else:
+            # Fallback to system fonts
+            font_main = FontProperties(family='monospace', weight='bold', size=60)
+            font_top = FontProperties(family='monospace', weight='bold', size=40)
+            font_sub = FontProperties(family='monospace', weight='normal', size=22)
+            font_coords = FontProperties(family='monospace', size=14)
+        
+    if show_text:
+        spaced_city = "  ".join(list(city.upper()))
 
-    # --- BOTTOM TEXT ---
-    ax.text(0.5, 0.14, spaced_city, transform=ax.transAxes,
-            color=THEME['text'], ha='center', fontproperties=font_main, zorder=11)
-    
-    ax.text(0.5, 0.10, country.upper(), transform=ax.transAxes,
-            color=THEME['text'], ha='center', fontproperties=font_sub, zorder=11)
-    
-    lat, lon = point
-    coords = f"{lat:.4f}° N / {lon:.4f}° E" if lat >= 0 else f"{abs(lat):.4f}° S / {lon:.4f}° E"
-    if lon < 0:
-        coords = coords.replace("E", "W")
-    
-    ax.text(0.5, 0.07, coords, transform=ax.transAxes,
-            color=THEME['text'], alpha=0.7, ha='center', fontproperties=font_coords, zorder=11)
-    
-    ax.plot([0.4, 0.6], [0.125, 0.125], transform=ax.transAxes, 
-            color=THEME['text'], linewidth=1, zorder=11)
+        # --- BOTTOM TEXT ---
+        ax.text(0.5, 0.14, spaced_city, transform=ax.transAxes,
+                color=THEME['text'], ha='center', fontproperties=font_main, zorder=11)
+        
+        ax.text(0.5, 0.10, country.upper(), transform=ax.transAxes,
+                color=THEME['text'], ha='center', fontproperties=font_sub, zorder=11)
+        
+        ax.plot([0.4, 0.6], [0.125, 0.125], transform=ax.transAxes, 
+                color=THEME['text'], linewidth=1, zorder=11)
+
+    if show_coords:
+        lat, lon = point
+        coords = f"{lat:.4f}° N / {lon:.4f}° E" if lat >= 0 else f"{abs(lat):.4f}° S / {lon:.4f}° E"
+        if lon < 0:
+            coords = coords.replace("E", "W")
+        
+        ax.text(0.5, 0.07, coords, transform=ax.transAxes,
+                color=THEME['text'], alpha=0.7, ha='center', fontproperties=font_coords, zorder=11)
 
     # --- ATTRIBUTION (bottom right) ---
     if FONTS:
@@ -420,6 +423,8 @@ Examples:
     parser.add_argument('--country', '-C', type=str, help='Country name')
     parser.add_argument('--theme', '-t', type=str, default='feature_based', help='Theme name (default: feature_based)')
     parser.add_argument('--distance', '-d', type=int, default=29000, help='Map radius in meters (default: 29000)')
+    parser.add_argument('--no-text', action='store_true', help='Hide city and country text')
+    parser.add_argument('--no-coords', action='store_true', help='Hide coordinates')
     parser.add_argument('--list-themes', action='store_true', help='List all available themes')
     
     args = parser.parse_args()
@@ -458,7 +463,11 @@ Examples:
     try:
         coords = get_coordinates(args.city, args.country)
         output_file = generate_output_filename(args.city, args.theme)
-        create_poster(args.city, args.country, coords, args.distance, output_file)
+        create_poster(
+            args.city, args.country, coords, args.distance, output_file,
+            show_text=not args.no_text,
+            show_coords=not args.no_coords
+        )
         
         print("\n" + "=" * 50)
         print("✓ Poster generation complete!")
